@@ -139,6 +139,27 @@ public class SalesSystem {
     }
 
     public static void showManuSalesValue(){
+        System.out.println("| Manufacturer ID | Manufacturer Name | Total Sales Value |");
+        try {
+            ResultSet manuRS = stmt.executeQuery(
+                "SELECT M.mid, M.mName, SUM(ProductSales.pSales) AS mSales " +
+                "FROM manufacturer M " +
+                "RIGHT JOIN " +
+                    "(SELECT P.mid, P.pid, (P.pPrice * TranPerP.pTranNum) AS pSales " +
+                    "FROM Product P " +
+                    "INNER JOIN " +
+                        "(SELECT pid, COUNT(*) AS pTranNum FROM transactionGROUP BY pid) TranPerP " +
+                    "ON P.pid = TranPerP.pid" +
+                    ") ProductSales " +
+                "ON M.mid = P.mid " +
+                "GROUP BY M.mid " +
+                "ORDER BY M.mSales DESC");
+
+            while (manuRS.next())
+                System.out.println("| " + manuRS.getInt("M..mid") + " | " + manuRS.getString("M.mName") + " | " + manuRS.getInt("mSales") + " |");
+        } catch (Exception e){
+        };
+        System.out.println("End of Query");
     }
 
     public static void showPopularParts(){
@@ -157,7 +178,8 @@ public class SalesSystem {
                         break;
                 case 4: showRecordsNum();
                         break;
-                case 5: break;
+                case 5: return;
+                default: System.out.println("Invalid choice");
             }
         }
     }
@@ -171,7 +193,8 @@ public class SalesSystem {
                         break;
                 case 2: sellPart();
                         break;
-                case 3: break;
+                case 3: return;
+                default: System.out.println("Invalid choice");
             }
         }
     }
@@ -187,7 +210,8 @@ public class SalesSystem {
                         break;
                 case 3: showPopularParts();
                         break;
-                case 4: break;
+                case 4: return;
+                default: System.out.println("Invalid choice");
             }
         }
     }
@@ -214,6 +238,7 @@ public class SalesSystem {
                 case 3: managerSystem();
                         break;
                 case 4: break;
+                default: System.out.println("Invalid choice");
             }
         }
     }
