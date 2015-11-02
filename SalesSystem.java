@@ -1,6 +1,7 @@
 import java.util.Scanner;
 import java.io.*;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 
 public class SalesSystem {
     public static Scanner s = new Scanner(System.in);
@@ -34,9 +35,108 @@ public class SalesSystem {
     public static void createTable(){
         //use auto_increment for ID's
         //use default getdate() for dates
+		boolean done = true;
+		System.out.print("Processing...");
+		try{
+	   //needed? Statement stmt = conn.createStatement();
+
+		// Category
+		String sql = "CREATE TABLE Category " +
+					 "(cid INTEGER," +
+					 " cname VARCHAR(20) default NULL," +
+					 " PRIMARY KEY(cid)," +
+			         " CONSTRAINT cid_check CHECK (cid >0 AND cid <=9))";
+		stmt.executeUpdate(sql);	
+		
+        // Manufacturer
+        sql = "CREATE TABLE Manufacturer " +
+                     "(mid INTEGER," +
+                     " mname VARCHAR(20) default NULL," +
+                     " maddress VARCHAR(50) default NULL," +     
+                     " mphone INTEGER," +   
+                     " mwarranty INTEGER," +
+                     " PRIMARY KEY(mid)," +     
+                     " CONSTRAINT mid_check CHECK (mid >0 AND mid <=99)," +
+                     " CONSTRAINT mphone_check CHECK (mphone >=00000000 AND mphone <=99999999)," +
+                     " CONSTRAINT mwarranty_check CHECK (mwarranty >=0 AND mwarranty <=9))"; 
+        stmt.executeUpdate(sql);  
+
+        // Part
+        sql = "CREATE TABLE Part " +
+                     "(pid INTEGER, " +
+                     " pname VARCHAR(20) default NULL," +
+                     " pprice INTEGER," +   
+                     " foreign key(cid) references Category," +
+                     " foreign key(mid) references Manufacturer," +
+                     " pquantity INTEGER," +
+                     " PRIMARY KEY(pid)," +
+                     " CONSTRAINT pid_check CHECK (pid >0 AND pid <=999)," +
+                     " CONSTRAINT pprice_check CHECK (pprice >0 AND pprice <=99999)," +
+                     " CONSTRAINT pquantity_check CHECK (pquantity >=0 AND pquantity <=99))"; 
+        stmt.executeUpdate(sql);    
+
+        // Salesperson
+        sql = "CREATE TABLE Salesperson " +
+                     "(sid INTEGER," +
+                     " sname VARCHAR(20) default NULL," +
+                     " saddress VARCHAR(50) default NULL," +
+                     " sphone INTEGER," +
+                     " PRIMARY KEY(sid)," +
+                     " CONSTRAINT sid_check CHECK (sid >0 AND sid <=99)," +
+                     " CONSTRAINT sphone_check CHECK (sphone >=00000000 AND sphone <=99999999))";
+        stmt.executeUpdate(sql); 
+
+        // Transaction
+        sql = "CREATE TABLE Transaction " +
+                     "(tid INTEGER," +
+                     " foreign key(pid) references Part," +
+                     " foreign key(sid) references Salesperson," +
+                     " tdate DATE," +
+                     " PRIMARY KEY(tid)," +
+                     " CONSTRAINT tid_check CHECK (tid >0 AND tid <=9999))"; 
+        stmt.executeUpdate(sql); 
+        stmt.close();
+
+		}catch(SQLException e){
+			done = false;
+		}
+		if(done){
+			System.out.println("Done! Database is initialized!");
+		}else{
+			System.out.println("Fail to initialize the database!");
+		}
+		System.out.println("");
     }
 
     public static void deleteTable(){
+        boolean done = true;
+        System.out.print("Processing...");
+        try{
+            stmt = conn.createStatement();
+            String sql = "DROP TABLE Category CASCADE CONSTRAINTS";
+            stmt.executeUpdate(sql); 
+
+            sql = "DROP TABLE Manufacturer CASCADE CONSTRAINTS";
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE Part CASCADE CONSTRAINTS";
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE Salesperson CASCADE CONSTRAINTS";
+            stmt.executeUpdate(sql);
+
+            sql = "DROP TABLE Transaction CASCADE CONSTRAINTS";
+            stmt.executeUpdate(sql);
+            stmt.close();
+        }catch(SQLException e){
+            done = false;
+        }
+        if (done){
+            System.out.println("Done! Database is removed!");
+        }else{
+            System.out.println("Fail to delete the database!");
+        }
+        System.out.println("");
     }
 
     public static void loadFromDatafile(){
@@ -80,6 +180,39 @@ public class SalesSystem {
     }
 
     public static void showRecordsNum(){
+		int numOfRecord;
+		String selectSQL = "Select count(*) as total from ?";
+		System.out.printf("Number of records on each table:\n");
+        try {
+            PreparedStatement pstmt = conn.prepareStatement(selectSQL);
+            pstmt.setString(1, "category");
+		    ResultSet rs = pstmt.executeQuery(selectSQL);
+		    numOfRecord = rs.getInt("total");
+		    System.out.printf("category:%d\n",numOfRecord);
+		    
+		    pstmt.setString(1, "manufacturer");
+		    rs = pstmt.executeQuery(selectSQL);
+		    numOfRecord = rs.getInt("total");
+		    System.out.printf("manufacturer:%d\n", numOfRecord);
+		    
+		    pstmt.setString(1, "part");
+		    rs = pstmt.executeQuery(selectSQL);
+		    numOfRecord = rs.getInt("total");
+		    System.out.printf("part:%d\n", numOfRecord);
+		    
+
+		    pstmt.setString(1, "salesperson");
+		    rs = pstmt.executeQuery(selectSQL);
+		    numOfRecord = rs.getInt("total");
+		    System.out.printf("salesperson:%d\n", numOfRecord);
+		    
+
+		    pstmt.setString(1, "transaction");
+		    rs = pstmt.executeQuery(selectSQL);
+		    numOfRecord = rs.getInt("total");
+		    System.out.printf("transaction:%d\n", numOfRecord);
+        } catch (Exception e){
+        };
     }
 
     public static int salesMenu(){
@@ -93,6 +226,85 @@ public class SalesSystem {
     }
 
     public static void searchParts(){
+        boolean valid = true;
+        boolean done = true;
+        int count = 0;
+        PreparedStatement prestmt = null;
+        int s_choice = 0;
+
+        do{
+            valid = true;
+            try{
+                System.out.println("Choose the search criterion: ");    
+                System.out.println("1. Part Name");
+                System.out.println("2. Manufacturer Name");
+                System.out.print("Choose the search criterion: ");
+                s_choice = s.nextInt();
+            }catch(NumberFormatException e){
+                 valid = false;  //if error is caught, then valid is false
+            }
+
+            if (s_choice < 1 || s_choice > 2){
+                 valid = false;     
+            }
+            if(!valid){
+                  System.out.println("Invalid input! Please try it again");
+            }
+        }while(!valid);
+
+        System.out.println("");
+
+        System.out.print("Type in the Search Keyword: "); 
+        String keyword = s.nextLine().replaceAll("\\s+", " ");      //remove all duplicated space in the input
+
+        String sql = "";
+        switch(s_choice){
+            case 1: sql = "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " + 
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND P.pname LIKE '%'" +keyword+ "'%'";  //or '%"+keyword+"%'"
+                           break;   
+            case 2: sql = "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " +
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND M.mname LIKE '%'" +keyword+ "'%'";  //or '%"+keyword+"%'";
+                           break;                
+
+        } 
+
+        try{
+
+            prestmt = conn.prepareStatement(sql);
+            ResultSet rs = prestmt.executeQuery();
+            System.out.println("|  ID  |  Name  |  Manufacturer  |  Category  | Quantity  |  Warranty  |  Price  |");
+
+            while(rs.next()){
+                int pid = rs.getInt(1);
+                String ppname = rs.getString(2);
+                String mname = rs.getString(3);
+                String cnmae = rs.getString(4);
+                int quantity = rs.getInt(5);
+                int warranty = rs.getInt(6);
+                int price = rs.getInt(7);
+                count++;
+            //    System.out.format("|%6d|%20s|%20s|%20s|%20d|%n", pid, p_name.replaceAll("\\s+", " "),  c_name.replaceAll("\\s+", " "),  m_name.replaceAll("\\s+", " "),price);      
+            }
+            rs.close();
+            prestmt.close();
+
+        }catch(SQLException e){
+            done = false;
+        }
+
+        if (done && (count == 0)){
+            System.out.println("No Result Found!");
+        }
+        else if (done &&(count > 0 )){
+            System.out.println("End of the search");
+        }
+        else {
+            System.out.println("Fail to show the result");
+        }
+
+        System.out.println("");
     }
 
     public static void sellPart(){
@@ -136,6 +348,46 @@ public class SalesSystem {
     }
 
     public static void showSalespersonRecord(){
+		System.out.printf("Enter The Salesperson ID : ");
+		int sID = s.nextInt();
+		System.out.printf("Type in the starting date [dd/mm/yyyy] : ");
+		String startDate = s.next();
+		System.out.printf("Type in the ending date [dd/mm/yyyy] : ");
+		String endDate = s.next();
+		
+		int tID, pID,pPrice;
+		String pName, mName, date;
+		
+        try {
+		    String selectSQL = "SELECT t.tID, p.pID, p.pName, m.mName, p.pName, t.tDate "
+		    		+ "FROM transaction t, part p , manufacturer m, salesperson s " 
+		    		+ "WHERE sID = ? AND s.sID = t.sID AND t.pID = p.pID AND p.mID = m.mID AND t.tDate <= ? AND t.tDate>=?"
+		    		+ "ORDER BY t.tDate DESC";
+		    PreparedStatement pstmt = conn.prepareStatement(selectSQL);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            java.util.Date dateU = sdf.parse(startDate);
+            java.sql.Date sdate = new Date(dateU.getTime());
+            dateU = sdf.parse(endDate);
+            java.sql.Date edate = new Date(dateU.getTime());
+		    pstmt.setInt(1, sID);
+		    pstmt.setDate(2, sdate);
+		    pstmt.setDate(3, edate);
+		    ResultSet rs = pstmt.executeQuery(selectSQL);
+		    System.out.printf("Transaction Record:\n");
+		    System.out.printf("| ID | Part ID | Part Name | Manufacturer | Price | Date |\n");
+		    
+		    while(rs.next()){
+		    	tID = rs.getInt("tID");
+		    	pID = rs.getInt("pID");
+		    	pName = rs.getString("pName");
+		    	mName = rs.getString("mName");
+		    	pPrice = rs.getInt("pPrice");
+		    	date = rs.getDate("tDate").toString();
+		    	System.out.printf("| %d | %d | %s | %s | %d | %s |\n", tID, pID, pName, mName, pPrice, date);
+		    
+		    }
+        } catch (Exception e) {
+        };
     }
 
     public static void showManuSalesValue(){
@@ -163,6 +415,30 @@ public class SalesSystem {
     }
 
     public static void showPopularParts(){
+		System.out.printf("Type in the number of parts: ");
+		int numOfPart = s.nextInt();
+		int pID, total;
+		String pName;
+		
+        try {
+		String selectSQL = "SELECT p.pID, p.pName, count(*) as total"
+				+"from part p, transaction t"
+				+"where p.pID = t.pID"
+				+"group by p.pID"
+				+"order by total DESC"
+				+"limit ?";
+		PreparedStatement pstmt = conn.prepareStatement(selectSQL);
+		pstmt.setInt(1, numOfPart);
+		ResultSet rs = pstmt.executeQuery(selectSQL);
+		System.out.printf("| Part ID | Part Name | No. if Transaction |\n");
+		while(rs.next()){
+			pID = rs.getInt("pID");
+			pName = rs.getString("pName");
+			total = rs.getInt("total");
+			System.out.printf("| %d | %s | %s |\n", pID, pName, total);
+		}
+        } catch (Exception e){
+        };
     }
 
     public static void adminSystem(){
