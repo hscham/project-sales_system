@@ -5,6 +5,17 @@ import java.sql.*;
 public class SalesSystem {
     public static Scanner s = new Scanner(System.in);
     //Load JDBC Driver
+    try{
+        Class.forName(" oracle.jdbc.driver.OracleDriver");
+    } catch(Exception x) {
+        System.out.println("Unable to load the driver class!");
+    }
+    //Establish connection
+    Connection conn = DriverManager.gerConnection(
+        jdbs:oracle:thin:@db12.cse.cuhk.edu.hk:1521:db12",
+        "d075", "ieytlflx");
+    Statement stmt = conn.createStatement();
+
     public static int mainMenu(){
         System.out.println("-----Main menu----");
         System.out.println("What kinds of operation would you like to perform?");
