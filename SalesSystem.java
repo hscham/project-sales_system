@@ -5,17 +5,6 @@ import java.sql.*;
 public class SalesSystem {
     public static Scanner s = new Scanner(System.in);
     //Load JDBC Driver
-    try{
-        Class.forName(" oracle.jdbc.driver.OracleDriver");
-    } catch(Exception x) {
-        System.out.println("Unable to load the driver class!");
-    }
-    //Establish connection
-    Connection conn = DriverManager.gerConnection(
-        jdbs:oracle:thin:@db12.cse.cuhk.edu.hk:1521:db12",
-        "d075", "ieytlflx");
-    Statement stmt = conn.createStatement();
-
     public static int mainMenu(){
         System.out.println("-----Main menu----");
         System.out.println("What kinds of operation would you like to perform?");
@@ -69,7 +58,6 @@ public class SalesSystem {
         int partId = s.nextInt();
         System.out.print("Enter the Salesperson ID: ");
         int saleID = s.nextInt();
-        //
     }
 
     public static int managerMenu(){
@@ -103,7 +91,7 @@ public class SalesSystem {
                     break;
             case 3: loadFromDatafile();
                     break;
-            case 4: showRecordsNum()
+            case 4: showRecordsNum();
                     break;
             case 5: break;
             }
@@ -140,7 +128,17 @@ public class SalesSystem {
         }
     }
 
-    public static void main(string[] args){
+    public static void main(String[] args){
+        try{
+            Class.forName(" oracle.jdbc.driver.OracleDriver");
+            Connection conn = DriverManager.getConnection(
+                "jdbc:oracle:thin:@db12.cse.cuhk.edu.hk:1521:db12",
+                "d075", "ieytlflx");
+            Statement stmt = conn.createStatement();
+        } catch(Exception x) {
+            System.out.println("Unable to load the driver class!");
+        }
+
         System.out.println("Welcome to sales system!");
         int choice = 1;
         while(choice != 4){
