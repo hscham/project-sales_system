@@ -17,7 +17,7 @@ public class SalesSystem {
     Statement stmt = conn.createStatement();
 
     public static int mainMenu(){
-        System.out.println("-----Main menu----");
+        System.out.println("\n-----Main menu----");
         System.out.println("What kinds of operation would you like to perform?");
         System.out.println("1. Operations for administrator");
         System.out.println("2. Operations for salesperson");
@@ -28,7 +28,7 @@ public class SalesSystem {
     }
 
     public static int adminMenu(){
-        System.out.println("-----Operations for administrator menu----");
+        System.out.println("\n-----Operations for administrator menu----");
         System.out.println("What kinds of operation would you like to perform?");
         System.out.println("1. Create all tables");
         System.out.println("2. Delete all tables");
@@ -46,13 +46,50 @@ public class SalesSystem {
     }
 
     public static void loadFromDatafile(){
+        System.out.print("\nType in the Source Data Folder Path: ");
+        String path = s.next();
+
+        String[] tables = { "category", "manufacturer", "part", "salesperson", "transaction" };
+        File[] file = new File[5];
+        int i, j;
+        for (i = 0; i < 5; i++)
+            file[i] = new File(path + tables[i] + ".txt");
+        String[] statements = {
+            "INSERT INTO category VALUES (?,?)",
+            "INSERT INTO manufacturer VALUES (?,?,?,?,?)",
+            "INSERT INTO part VALUES (?,?,?,?,?,?)",
+            "INSERT INTO salesperson VALUES (?,?,?,?,?)",
+            "INSERT INTO transaction VALUES (?,?,?,?)"
+            };
+        BufferedReader dataBR;
+        Scanner dataS;
+        String tuple;
+        PreparedStatement pstmt;
+
+        try {
+            for (i = 0; i < 5; i++){
+                pstmt = conn.prepareStatement(statements[i]);
+                dataBR = new BufferedReader(new FileReader(file[i]));
+                while ((tuple = dataBR.readLine()) != null){
+                    dataS = new Scanner(tuple).useDelimiter("\t");
+                    j = 1;
+                    while (dataS.hasNext())
+                        pstmt.setString(j++, dataS.next());
+                    pstmt.executeUpdate();
+                    dataS.close();
+                }
+            }
+        } catch (Exception e){
+        };
+
+        System.out.println("Processing...Done! Data is inputted to the database!");
     }
 
     public static void showRecordsNum(){
     }
 
     public static int salesMenu(){
-        System.out.println("-----Operations for salesperson menu----");
+        System.out.println("\n-----Operations for salesperson menu----");
         System.out.println("What kinds of operation would you like to perform?");
         System.out.println("1. Search for parts");
         System.out.println("2. Sell a part");
@@ -72,7 +109,7 @@ public class SalesSystem {
     }
 
     public static int managerMenu(){
-        System.out.println("-----Operations for manager menu----");
+        System.out.println("\n-----Operations for manager menu----");
         System.out.println("What kinds of operation would you like to perform?");
         System.out.println("1. Show the sales record of a salesperson within a period");
         System.out.println("2. Show the total sales value of each manufacturer");
@@ -96,15 +133,15 @@ public class SalesSystem {
         while(choice != 5){
             choice = adminMenu();
             switch(choice) {
-            case 1: createTable();
-                    break;
-            case 2: deleteTable();
-                    break;
-            case 3: loadFromDatafile();
-                    break;
-            case 4: showRecordsNum();
-                    break;
-            case 5: break;
+                case 1: createTable();
+                        break;
+                case 2: deleteTable();
+                        break;
+                case 3: loadFromDatafile();
+                        break;
+                case 4: showRecordsNum();
+                        break;
+                case 5: break;
             }
         }
     }
@@ -113,12 +150,12 @@ public class SalesSystem {
         int choice = 1;
         while(choice != 3){
             choice = salesMenu();
-            switch(choice) {
-            case 1: searchParts();
-                    break;
-            case 2: sellPart();
-                    break;
-            case 3: break;
+                switch(choice) {
+                case 1: searchParts();
+                        break;
+                case 2: sellPart();
+                        break;
+                case 3: break;
             }
         }
     }
@@ -128,13 +165,13 @@ public class SalesSystem {
         while(choice != 4){
             choice = managerMenu();
             switch(choice) {
-            case 1: showSalespersonRecord();
-                    break;
-            case 2: showManuSalesValue();
-                    break;
-            case 3: showPopularParts();
-                    break;
-            case 4: break;
+                case 1: showSalespersonRecord();
+                        break;
+                case 2: showManuSalesValue();
+                        break;
+                case 3: showPopularParts();
+                        break;
+                case 4: break;
             }
         }
     }
@@ -149,19 +186,18 @@ public class SalesSystem {
         } catch(Exception x) {
             System.out.println("Unable to load the driver class!");
         }
-
         System.out.println("Welcome to sales system!");
         int choice = 1;
         while(choice != 4){
             choice = mainMenu();
             switch(choice) {
-            case 1: adminSystem();
-                    break;
-            case 2: salesSystem();
-                    break;
-            case 3: managerSystem();
-                    break;
-            case 4: break;
+                case 1: adminSystem();
+                        break;
+                case 2: salesSystem();
+                        break;
+                case 3: managerSystem();
+                        break;
+                case 4: break;
             }
         }
     }
