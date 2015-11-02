@@ -69,7 +69,6 @@ public class SalesSystem {
         int partId = s.nextInt();
         System.out.print("Enter the Salesperson ID: ");
         int saleID = s.nextInt();
-        //
     }
 
     public static int managerMenu(){
