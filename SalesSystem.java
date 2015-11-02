@@ -5,16 +5,8 @@ import java.sql.*;
 public class SalesSystem {
     public static Scanner s = new Scanner(System.in);
     //Load JDBC Driver
-    try{
-        Class.forName(" oracle.jdbc.driver.OracleDriver");
-    } catch(Exception x) {
-        System.out.println("Unable to load the driver class!");
-    }
-    //Establish connection
-    Connection conn = DriverManager.gerConnection(
-        jdbs:oracle:thin:@db12.cse.cuhk.edu.hk:1521:db12",
-        "d075", "ieytlflx");
-    Statement stmt = conn.createStatement();
+    public static Connection conn;
+    public static Statement stmt;
 
     public static int mainMenu(){
         System.out.println("\n-----Main menu----");
@@ -40,6 +32,8 @@ public class SalesSystem {
     }
 
     public static void createTable(){
+        //use auto_increment for ID's
+        //use default getdate() for dates
     }
 
     public static void deleteTable(){
@@ -103,9 +97,31 @@ public class SalesSystem {
 
     public static void sellPart(){
         System.out.print("Enter the Part ID: ");
-        int partId = s.nextInt();
+        int partID = s.nextInt();
         System.out.print("Enter the Salesperson ID: ");
         int saleID = s.nextInt();
+        String partName;
+        int partQuan;
+        try {
+            ResultSet partRS = stmt.executeQuery("SELECT pName, pAvailableQuentity FROM part WHERE pID = " + partID);
+            partName = partRS.getString(1);
+            partQuan = partRS.getInt(2);
+            PreparedStatement pstmtP = conn.prepareStatement("UPDATE part SET pAvailableQuentity = pAvailable - 1 WHERE pID = " + partID);
+            PreparedStatement pstmtT = conn.prepareStatement("INSERT INTO transaction (pID, sID) VALUES (?,?)");
+            if (partQuan > 0){
+                pstmtT.setInt(1, partID);
+                pstmtT.setInt(2, saleID);
+                pstmtP.executeUpdate();
+                pstmtT.executeUpdate();
+            } else {
+                System.out.println("Requested part not available. Transaction failed.");
+                return;
+            }
+        } catch (Exception e){
+            System.out.println("Unknown error occured. Transaction failed.");
+            return;
+        };
+        System.out.println("Product: " + partName + "(id: " + partID + ") Remaining Quantity: " + --partQuan);
     }
 
     public static int managerMenu(){
@@ -179,10 +195,10 @@ public class SalesSystem {
     public static void main(String[] args){
         try{
             Class.forName(" oracle.jdbc.driver.OracleDriver");
-            Connection conn = DriverManager.getConnection(
+            conn = DriverManager.getConnection(
                 "jdbc:oracle:thin:@db12.cse.cuhk.edu.hk:1521:db12",
                 "d075", "ieytlflx");
-            Statement stmt = conn.createStatement();
+            stmt = conn.createStatement();
         } catch(Exception x) {
             System.out.println("Unable to load the driver class!");
         }
