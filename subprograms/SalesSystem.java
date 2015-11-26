@@ -10,6 +10,7 @@ public class SalesSystem {
     public static Connection conn;
     public static Statement stmt;
     public static PreparedStatement pstmt;
+    public static Scanner dataS;
 
     static void localprintEx (Exception e){
             System.out.println(e.getMessage());
