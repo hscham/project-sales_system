@@ -11,7 +11,6 @@ public class SalesSystem {
     public static Statement stmt;
     public static PreparedStatement pstmt;
     public static Scanner dataS;
-
     static void localprintEx (Exception e){
             System.out.println(e.getMessage());
             System.out.println(e.getCause());
@@ -44,7 +43,6 @@ public class SalesSystem {
 
     public static void createTable(){
         boolean done = true;
-        System.out.print("Processing...");
             try{
 
             // Category
@@ -117,7 +115,7 @@ public class SalesSystem {
             done = false;
         }
         if(done){
-            System.out.println("Done! Database is initialized!");
+            System.out.println("Processing...Done! Database is initialized!");
         }else{
             System.out.println("Fail to initialize the database!");
         }
@@ -126,7 +124,6 @@ public class SalesSystem {
     public static void deleteTable(){
         //System.out.println("Debug: enter function deleteTable()");
         boolean done = true;
-        System.out.print("Processing...");
         try{
             stmt = conn.createStatement();
             String sql;
@@ -150,7 +147,7 @@ public class SalesSystem {
             done = false;
         }
         if (done){
-            System.out.println("Done! Database is removed!");
+            System.out.println("Processing...Done! Database is removed!");
         }else{
             System.out.println("Fail to delete the database!");
         }
@@ -180,11 +177,9 @@ public class SalesSystem {
             int count = 0;
             for (i = 0; i < 5; i++){
                 count = 0;
-                System.out.println("i = " + i);
                 pstmt = conn.prepareStatement(statements[i]);
                 dataBR = new BufferedReader(new FileReader(file[i]));
                 while ((tuple = dataBR.readLine()) != null){
-                    System.out.println("\tcount = " + count++);
                     dataS = new Scanner(tuple).useDelimiter("\t");
                     if (i==0){
                         try {
@@ -248,6 +243,47 @@ public class SalesSystem {
 
     public static void showRecordsNum(){
         System.out.println("Debug: enter function showRecordsNum()");
+                int numOfRecord;
+        System.out.printf("Number of records on each table:\n");
+        try {
+//            stmt = conn.createStatement();
+            String sql = "Select count(*)as total from category";
+            ResultSet rs = stmt.executeQuery(sql);
+            rs.next();
+            numOfRecord = rs.getInt(1);
+            System.out.printf("category:%d\n",numOfRecord);
+            
+            sql = "Select count(*) as total from manufacturer";
+            stmt.executeUpdate(sql);
+            rs = stmt.executeQuery(sql); 
+            rs.next();
+            numOfRecord = rs.getInt("total");
+            System.out.printf("manufacturer:%d\n", numOfRecord);
+            
+            sql = "Select count(*) as total from part";
+            stmt.executeUpdate(sql);
+            rs = stmt.executeQuery(sql); 
+            rs.next();
+            numOfRecord = rs.getInt("total");
+            System.out.printf("part:%d\n", numOfRecord);
+            
+
+           sql = "Select count(*) as total from salesperson";
+            stmt.executeUpdate(sql);
+            rs = stmt.executeQuery(sql); 
+            rs.next();
+            numOfRecord = rs.getInt("total");
+            System.out.printf("salesperson:%d\n", numOfRecord);
+            
+
+            sql = "Select count(*) as total from transaction";
+            stmt.executeUpdate(sql);
+            rs = stmt.executeQuery(sql); 
+            rs.next();
+            numOfRecord = rs.getInt("total");
+            System.out.printf("transaction:%d\n", numOfRecord);
+        } catch (Exception e){
+        };
     }
 
     public static int salesMenu(){
@@ -261,11 +297,184 @@ public class SalesSystem {
     }
 
     public static void searchParts(){
-        System.out.println("Debug: enter function searchParts()");
+    int s_choice=0;
+    boolean valid;
+            do{
+            valid = true;
+            try{
+                System.out.println("Choose the search criterion: ");    
+                System.out.println("1. Part Name");
+                System.out.println("2. Manufacturer Name");
+                System.out.print("Choose the search criterion: ");
+                s_choice = s.nextInt();
+            }catch(NumberFormatException e){
+                 valid = false;  //if error is caught, then valid is false
+            }
+            if (s_choice < 1 || s_choice > 2){
+                 valid = false;     
+            }
+            if(!valid){
+                  System.out.println("Invalid input! Please try it again");
+            }
+        }while(!valid);
+    
+    switch(s_choice){
+        case 1: searchParts_Part();
+                break;
+        case 2: searchParts_Manufacturer();
+                break;
     }
+}
+
+public static void searchParts_Part(){
+    String keyword="",token="",sql = "";
+    int ordering;
+    System.out.printf("Type in the Search Keyword: ");
+    keyword = s.next();
+    System.out.printf("Choose ordering:\n");
+    System.out.printf("1. By price, ascending order\n");
+    System.out.printf("2. By price, descending order\n");
+    System.out.printf("Choose the search criterion: ");
+    ordering = s.nextInt();
+    
+    switch(ordering){
+        case 1: sql =   "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " + 
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND P.pname LIKE '%" +keyword+ "%' " + 
+                           "order by p.pprice";
+                           break;  
+                           
+        case 2: sql =   "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " + 
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND P.pname LIKE '%" +keyword+ "%' " + 
+                           "order by p.pprice DESC";  
+                           break;  
+    }
+    try{
+
+            pstmt = conn.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+            System.out.println("|  ID  |  Name  |  Manufacturer  |  Category  | Quantity  |  Warranty  |  Price  |");
+
+            while(rs.next()){
+                int pid = rs.getInt(1);
+                String ppname = rs.getString(2);
+                String mname = rs.getString(3);
+                String cname = rs.getString(4);
+                int quantity = rs.getInt(5);
+                int warranty = rs.getInt(6);
+                int price = rs.getInt(7);
+            //    System.out.format("|%6d|%20s|%20s|%20s|%20d|%n", pid, p_name.replaceAll("\\s+", " "),  c_name.replaceAll("\\s+", " "),  m_name.replaceAll("\\s+", " "),price);     
+            System.out.printf("| %d | %s | %s | %s | %d | %d | %d |\n", pid, ppname, mname, cname, quantity, warranty, price);
+
+            }
+            rs.close();
+            pstmt.close();
+            System.out.println("End of Query");
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+            System.out.println(e.getLocalizedMessage());
+            System.out.println(e.getCause());
+            System.out.println(Arrays.toString(e.getStackTrace()));
+            e.printStackTrace();
+        }
+}
+
+public static void searchParts_Manufacturer(){
+    String keyword="",sql = "";
+    int ordering;
+    System.out.printf("Type in the Search Keyword: ") ;
+    keyword = s.next();
+    System.out.printf("Choose ordering:\n");
+    System.out.printf("1. By price, ascending order\n");
+    System.out.printf("2. By price, descending order\n");
+    System.out.printf("Choose the search criterion: ");
+    ordering = s.nextInt();
+    
+    switch(ordering){
+        case 1: sql = "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " +
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND M.mname LIKE '%" +keyword+ "%' " + 
+                           "order by p.pprice";  
+                           break;  
+                           
+        case 2: sql = "SELECT P.pid, P.pname, M.mname, C.cname, P.pquantity, M.mwarranty, P.pprice " +
+                           "FROM Part P, Manufacturer M, Category C " +
+                           "WHERE P.mid = M.mid AND P.cid = C.cid AND P.pquantity > 0 AND M.mname LIKE '%" +keyword+ "%' " + 
+                           "order by p.pprice DESC";  
+                           break;   
+    }
+    try{
+
+            pstmt = conn.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+            System.out.println("|  ID  |  Name  |  Manufacturer  |  Category  | Quantity  |  Warranty  |  Price  |");
+
+            while(rs.next()){
+                int pid = rs.getInt(1);
+                String ppname = rs.getString(2);
+                String mname = rs.getString(3);
+                String cname = rs.getString(4);
+                int quantity = rs.getInt(5);
+                int warranty = rs.getInt(6);
+                int price = rs.getInt(7);
+            //    System.out.format("|%6d|%20s|%20s|%20s|%20d|%n", pid, p_name.replaceAll("\\s+", " "),  c_name.replaceAll("\\s+", " "),  m_name.replaceAll("\\s+", " "),price);     
+            System.out.printf("| %d | %s | %s | %s | %d | %d | %d |\n", pid, ppname, mname, cname, quantity, warranty, price);
+
+            }
+            rs.close();
+            pstmt.close();
+            System.out.println("End of Query");
+
+        }catch(SQLException e){
+            System.out.println(e.getMessage());
+            System.out.println(e.getLocalizedMessage());
+            System.out.println(e.getCause());
+            System.out.println(Arrays.toString(e.getStackTrace()));
+            e.printStackTrace();
+        }
+}
 
     public static void sellPart(){
         System.out.println("Debug: enter function sellPart()");
+                System.out.print("Enter the Part ID: ");
+        int partID = s.nextInt();
+        System.out.print("Enter the Salesperson ID: ");
+        int saleID = s.nextInt();
+        String partName;
+        int partQuan;
+        int last_tid;
+        try {
+            ResultSet partRS = stmt.executeQuery("SELECT pName, pquantity FROM part WHERE pID = " + partID);
+            partRS.next();
+            partName = partRS.getString(1);
+            partQuan = partRS.getInt(2);
+            partRS = stmt.executeQuery("select tid from transaction order by tid DESC");
+            partRS.next();
+            last_tid = partRS.getInt(1);
+            System.out.printf("last_tid = %d\n", last_tid);
+            PreparedStatement pstmtP = conn.prepareStatement("UPDATE part SET pquantity = pquantity - 1 WHERE pID = " + partID);
+            PreparedStatement pstmtT = conn.prepareStatement("INSERT INTO transaction (tID, pID, sID) VALUES (?,?,?)");
+            if (partQuan > 0){
+                pstmtT.setInt(1, last_tid+1);
+                pstmtT.setInt(2, partID);
+                pstmtT.setInt(3, saleID);
+                pstmtP.executeUpdate();
+                pstmtT.executeUpdate();
+            } else {
+                System.out.println("Requested part not available. Transaction failed.");
+                return;
+            }
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            System.out.println(e.getLocalizedMessage());
+            System.out.println(e.getCause());
+            System.out.println(Arrays.toString(e.getStackTrace()));
+            e.printStackTrace();
+            System.out.println("Unknown error occured. Transaction failed.");
+            return;
+        };
+        System.out.println("Product: " + partName + "(id: " + partID + ") Remaining Quantity: " + --partQuan);
     }
 
     public static int managerMenu(){
@@ -280,65 +489,168 @@ public class SalesSystem {
     }
 
     public static void showSalespersonRecord(){
-        System.out.println("Debug: enter function showSalespersonRecord()");
+        System.out.printf("Enter The Salesperson ID : ");
+        int sID = s.nextInt();
+        System.out.printf("Type in the starting date [dd/mm/yyyy] : ");
+        String startDate = s.next();
+        System.out.printf("Type in the ending date [dd/mm/yyyy] : ");
+        String endDate = s.next();
+        
+        int tID, pID,pPrice;
+        String pName, mName;
+//        String date;
+        Date date;
+//          java.sql.Date date;
+        
+        try {
+            String selectSQL = "SELECT t.tID, p.pID, p.pName, m.mName, p.pName,p.pPrice, t.tDate "
+                    + "FROM transaction t, part p , manufacturer m, salesperson s " 
+                    + "WHERE s.sID = ? AND s.sID = t.sID AND t.pID = p.pID AND p.mID = m.mID AND t.tDate >= ? AND t.tDate<=?"
+                    + "ORDER BY t.tDate DESC";
+            pstmt = conn.prepareStatement(selectSQL);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            java.util.Date dateU = sdf.parse(startDate);
+            java.sql.Date sdate = new Date(dateU.getTime());
+            dateU = sdf.parse(endDate);
+            java.sql.Date edate = new Date(dateU.getTime());
+            pstmt.setInt(1, sID);
+            pstmt.setDate(2, sdate);
+            pstmt.setDate(3, edate);
+            ResultSet rs = pstmt.executeQuery();
+            System.out.printf("Transaction Record:\n");
+            System.out.printf("| ID | Part ID | Part Name | Manufacturer | Price | Date |\n");
+            
+            while(rs.next()){
+                tID = rs.getInt("tID");
+                pID = rs.getInt("pID");
+                pName = rs.getString("pName");
+                mName = rs.getString("mName");
+                pPrice = rs.getInt("pPrice");
+              date = rs.getDate("tDate");
+                String sdf_date = sdf.format(date);
+                System.out.printf("| %d | %d | %s | %s | %d | %s |\n", tID, pID, pName, mName, pPrice, sdf_date);
+            
+            }
+            System.out.println("End of Query");
+        } catch (Exception e) {
+        };
     }
 
     public static void showManuSalesValue(){
          System.out.println("Debug: enter function showManuSalesValue()");
+                System.out.println("| Manufacturer ID | Manufacturer Name | Total Sales Value |");
+        try {
+            ResultSet manuRS = stmt.executeQuery(
+                "SELECT M.mid, M.mName, SUM(ProductSales.pSales) AS mSales " +
+                "FROM manufacturer M " +
+                "RIGHT JOIN " +
+                    "(SELECT P.mid, P.pid, (P.pPrice * TranPerP.pTranNum) AS pSales " +
+                    "FROM Product P " +
+                    "INNER JOIN " +
+                        "(SELECT pid, COUNT(*) AS pTranNum FROM transaction GROUP BY pid) TranPerP " +
+                    "ON P.pid = TranPerP.pid" +
+                    ") ProductSales " +
+                "ON M.mid = ProductSales.mid " +
+                "GROUP BY M.mid " +
+                "ORDER BY mSales DESC"
+
+                    //"select m.mid, m.mname, sum(temp.psum) as sum from manufacturer m right join ( select p.mid, p.pid, (p.pprice * temp2.count) as psum from part p inner join ( select pid, count(*) as count from transaction group by pid) temp2 on p.pid = temp2.pid) temp on m.mid = temp.mid group by m.mid, m.mname order by sum desc"
+                );
+
+            while (manuRS.next())
+                System.out.println("| " + manuRS.getInt(1) + " | " + manuRS.getString(2) + " | " + manuRS.getInt(3) + " |");
+                System.out.println("End of Query");
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            System.out.println(e.getLocalizedMessage());
+            System.out.println(e.getCause());
+            System.out.println(Arrays.toString(e.getStackTrace()));
+            e.printStackTrace();
+        };
+        System.out.println("End of Query");
+
     }
 
     public static void showPopularParts(){
         System.out.println("Debug: enter function showPopularParts()");
+        System.out.printf("Type in the number of parts: ");
+        int numOfPart = s.nextInt();
+        int pID, total;
+        String pName;
+        
+        try {
+        String selectSQL = "SELECT p.pID, p.pName, count(*) "
+                +"from part p, transaction t "
+                +"where p.pID = t.pID and rownum <= ?"
+//                +"where p.pid = t.pid "
+                +"group by p.pID, p.pname "
+                +"order by count(*) DESC";
+        System.out.printf("The string selectSQL is created.\n");
+        pstmt = conn.prepareStatement(selectSQL);
+        pstmt.setInt(1, numOfPart);
+        ResultSet rs = pstmt.executeQuery();
+        System.out.printf("| Part ID | Part Name | No. of Transaction |\n");
+        while(rs.next()){
+            pID = rs.getInt(1);
+            pName = rs.getString(2);
+            total = rs.getInt(3);
+            System.out.printf("| %d | %s | %s |\n", pID, pName, total);
+
+        }
+        System.out.println("End of Query");
+        } catch (Exception e){
+            localprintEx(e);
+        };
     }
 
     public static void adminSystem(){
-        int choice = 1;
-        while(choice != 5){
-            choice = adminMenu();
-            switch(choice) {
-                case 1: createTable();
-                        break;
-                case 2: deleteTable();
-                        break;
-                case 3: loadFromDatafile();
-                        break;
-                case 4: showRecordsNum();
-                        break;
-                case 5: return;
-                default: System.out.println("Invalid choice");
-            }
+        int choice = adminMenu();
+        switch(choice) {
+            case 1: createTable();
+                    mainMenu();
+                    break;
+            case 2: deleteTable();
+                    mainMenu();
+                    break;
+            case 3: loadFromDatafile();
+                    mainMenu();
+                    break;
+            case 4: showRecordsNum();
+                    mainMenu();
+                    break;
+            case 5: return;
+            default: System.out.println("Invalid choice");
         }
     }
 
     public static void salesSystem(){
-        int choice = 1;
-        while(choice != 3){
-            choice = salesMenu();
-                switch(choice) {
-                case 1: searchParts();
-                        break;
-                case 2: sellPart();
-                        break;
-                case 3: return;
-                default: System.out.println("Invalid choice");
-            }
+        int choice = salesMenu();
+        switch(choice) {
+            case 1: searchParts();
+                    mainMenu();
+                    break;
+            case 2: sellPart();
+                    mainMenu();
+                    break;
+            case 3: return;
+            default: System.out.println("Invalid choice");
         }
     }
 
     public static void managerSystem(){
-        int choice = 1;
-        while(choice != 4){
-            choice = managerMenu();
-            switch(choice) {
-                case 1: showSalespersonRecord();
-                        break;
-                case 2: showManuSalesValue();
-                        break;
-                case 3: showPopularParts();
-                        break;
-                case 4: return;
-                default: System.out.println("Invalid choice");
-            }
+        int choice = managerMenu();
+        switch(choice) {
+            case 1: showSalespersonRecord();
+                    mainMenu();
+                    break;
+            case 2: showManuSalesValue();
+                    mainMenu();
+                    break;
+            case 3: showPopularParts();
+                    mainMenu();
+                    break;
+            case 4: return;
+            default: System.out.println("Invalid choice");
         }
     }
 
