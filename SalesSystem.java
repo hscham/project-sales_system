@@ -111,7 +111,6 @@ public class SalesSystem {
             //System.out.println("Debug: after create table transaction");
 
         }catch(SQLException e){
-            localprintEx(e);
             done = false;
         }
         if(done){
@@ -143,7 +142,6 @@ public class SalesSystem {
             sql = "DROP TABLE Category";
             stmt.executeUpdate(sql);
         }catch(SQLException e){
-            localprintEx(e);
             done = false;
         }
         if (done){
@@ -186,7 +184,7 @@ public class SalesSystem {
                             pstmt.setInt(1, Integer.parseInt(dataS.next()));
                             pstmt.setString(2, dataS.next());
                         } catch (Exception e){
-                            localprintEx(e);
+                            System.out.println("Fail to set data when loading data to Category.");
                         }
                     } else if (i==1){
                         try {
@@ -196,7 +194,7 @@ public class SalesSystem {
                             pstmt.setInt(4, Integer.parseInt(dataS.next()));
                             pstmt.setInt(5, Integer.parseInt(dataS.next()));
                         } catch (Exception e){
-                            localprintEx(e);
+                            System.out.println("Fail to set data when loading data to Manufacturer.");
                         }
                     } else if (i==2){
                         try {
@@ -207,7 +205,7 @@ public class SalesSystem {
                             pstmt.setInt(5, Integer.parseInt(dataS.next()));
                             pstmt.setInt(6, Integer.parseInt(dataS.next()));
                         } catch (Exception e){
-                            localprintEx(e);
+                            System.out.println("Fail to set data when loading data to Part.");
                         }
                     } else if (i==3){
                         try {
@@ -216,7 +214,7 @@ public class SalesSystem {
                             pstmt.setString(3, dataS.next());
                             pstmt.setInt(4, Integer.parseInt(dataS.next()));
                         } catch (Exception e){
-                            localprintEx(e);
+                            System.out.println("Fail to set data when loading data to Transaction.");
                         }
                     } else {
                         try {
@@ -228,7 +226,7 @@ public class SalesSystem {
                             java.sql.Date date = new Date(dateU.getTime());
                             pstmt.setDate(4, date); 
                         } catch (Exception e){
-                            localprintEx(e);
+                            System.out.println("Fail to set data when loading data to Salesperson.");
                         }
                     }
                     pstmt.executeUpdate();
@@ -237,8 +235,7 @@ public class SalesSystem {
             }
             System.out.println("Processing...Done! Data is inputted to the database!");
         } catch (Exception e){
-            System.out.println("Fail to load data to the database!");
-            localprintEx(e);
+            System.out.println("Fail to load data to the database.");
         };
     }
 
@@ -282,6 +279,7 @@ public class SalesSystem {
             numOfRecord = rs.getInt("total");
             System.out.printf("transaction: %d\n", numOfRecord);
         } catch (Exception e){
+			System.out.println("Fail to show number of records in each table.");
         };
     }
 
@@ -371,11 +369,7 @@ public class SalesSystem {
             pstmt.close();
             System.out.println("End of Query");
         }catch(SQLException e){
-            System.out.println(e.getMessage());
-            System.out.println(e.getLocalizedMessage());
-            System.out.println(e.getCause());
-            System.out.println(Arrays.toString(e.getStackTrace()));
-            e.printStackTrace();
+			System.out.println("Fail to search for parts!");
         }
     }
     
@@ -423,11 +417,7 @@ public class SalesSystem {
             System.out.println("End of Query");
     
         }catch(SQLException e){
-            System.out.println(e.getMessage());
-            System.out.println(e.getLocalizedMessage());
-            System.out.println(e.getCause());
-            System.out.println(Arrays.toString(e.getStackTrace()));
-            e.printStackTrace();
+			System.out.println("Fail to search for parts!");
         }
     }
 
@@ -526,6 +516,7 @@ public class SalesSystem {
             java.sql.Date sdate = new Date(dateU.getTime());
             dateU = sdf.parse(endDate);
             java.sql.Date edate = new Date(dateU.getTime());
+            edate.setTime(edate.getTime() + 1000*60*60*24);
             pstmt.setInt(1, sID);
             pstmt.setDate(2, sdate);
             pstmt.setDate(3, edate);
@@ -546,6 +537,7 @@ public class SalesSystem {
             }
             System.out.println("End of Query");
         } catch (Exception e) {
+			System.out.println("Fail to show the sales record of a salesperson within the period.");
         };
     }
 
@@ -570,7 +562,6 @@ public class SalesSystem {
             while (manuRS.next())
                 System.out.println("| " + manuRS.getInt(1) + " | " + manuRS.getString(2) + " | " + manuRS.getInt(3) + " |");
         } catch (SQLException e){
-            localprintEx(e);
             System.out.println("Fail to show manufacturers' sales value");
         };
         System.out.println("End of Query");
@@ -583,11 +574,16 @@ public class SalesSystem {
         String pName;
         
         try {
-            String selectSQL = "SELECT p.pID, p.pName, count(*) "
+            String selectSQL = "SELECT * From (SELECT p.pID, p.pName, count(*) "
                     +"from part p, transaction t "
-                    +"where p.pID = t.pID and rownum <= ?"
+                    +"where p.pID = t.pID "
                     +"group by p.pID, p.pname "
-                    +"order by count(*) DESC";
+                    +"order by count(*) DESC) WHERE rownum <=?";
+            //String selectSQL = "SELECT p.pID, p.pName, count(*) "
+            //        +"from part p, transaction t "
+            //        +"where p.pID = t.pID and rownum <= ?"
+            //        +"group by p.pID, p.pname "
+            //        +"order by count(*) DESC";
             pstmt = conn.prepareStatement(selectSQL);
             pstmt.setInt(1, numOfPart);
             ResultSet rs = pstmt.executeQuery();
@@ -602,7 +598,7 @@ public class SalesSystem {
             System.out.println("End of Query");
         } catch (Exception e){
             localprintEx(e);
-            System.out.println("Fail to show " + numOfPart + " most popular parts");
+            System.out.println("Fail to show " + numOfPart + " most popular parts.");
         };
     }
 
@@ -618,7 +614,7 @@ public class SalesSystem {
             case 4: showRecordsNum();
                     break;
             case 5: return;
-            default: System.out.println("Invalid choice");
+            default: System.out.println("Invalid choice.");
         }
     }
 
@@ -630,7 +626,7 @@ public class SalesSystem {
             case 2: sellPart();
                     break;
             case 3: return;
-            default: System.out.println("Invalid choice");
+            default: System.out.println("Invalid choice.");
         }
     }
 
@@ -644,7 +640,7 @@ public class SalesSystem {
             case 3: showPopularParts();
                     break;
             case 4: return;
-            default: System.out.println("Invalid choice");
+            default: System.out.println("Invalid choice.");
         }
     }
 
@@ -656,7 +652,6 @@ public class SalesSystem {
                 "d075", "3170");
             stmt = conn.createStatement();
         } catch(Exception e) {
-            localprintEx(e);
             System.out.println("Unable to load the driver class!");
         }
 
@@ -672,14 +667,14 @@ public class SalesSystem {
                 case 3: managerSystem();
                         break;
                 case 4: break;
-                default: System.out.println("Invalid choice");
+                default: System.out.println("Invalid choice.");
             }
         }
 
         try {
             stmt.close();
         } catch (Exception e){
-            System.out.println("Fail to close Statement stmt");
+            System.out.println("Fail to close Statement stmt.");
         };
     }
 }
